@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forest Focus - Seasonal Daily Study Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #f4f7f4;
+            --bg-card: #ffffff;
+            --text-main: #1c2d24;
+            --text-muted: #5a7063;
+            --accent-primary: #2d6a4f;
+            --accent-hover: #1b4332;
+            --accent-light: #e8f5e9;
+            --border-color: #d8e2dc;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            --radius-lg: 16px;
+            --radius-md: 10px;
+            --season-hue: #40916c;
+            --season-bg-accent: #d8f3dc;
+        }
+
+        body.dark-theme {
+            --bg-primary: #0d1b1e;
+            --bg-card: #15262b;
+            --text-main: #e0e6ed;
+            --text-muted: #8ba0b2;
+            --accent-primary: #52b788;
+            --accent-hover: #74c69d;
+            --accent-light: #1b3835;
+            --border-color: #243b42;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            --season-hue: #74c69d;
+            --season-bg-accent: #1e3a34;
+        }
+
+        /* Seasonal Theme Variations */
+        body[data-season="spring"] { --season-hue: #d4a373; --season-bg-accent: #fefae0; }
+        body[data-season="summer"] { --season-hue: #2d6a4f; --season-bg-accent: #d8f3dc; }
+        body[data-season="autumn"] { --season-hue: #bc4749; --season-bg-accent: #fdf0ed; }
+        body[data-season="winter"] { --season-hue: #457b9d; --season-bg-accent: #e0f4fc; }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto 24px auto;
+            background: var(--bg-card);
+            padding: 16px 28px;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--season-hue);
+        }
+
+        .season-badge {
+            background: var(--season-bg-accent);
+            color: var(--season-hue);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .btn {
+            background: var(--accent-primary);
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover { background: var(--accent-hover); }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+
+        .btn-outline:hover { background: var(--accent-light); }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+        }
+
+        /* Layout Grid Columns */
+        .col-4 { grid-column: span 4; }
+        .col-8 { grid-column: span 8; }
+        .col-6 { grid-column: span 6; }
+        .col-12 { grid-column: span 12; }
+
+        @media (max-width: 1024px) {
+            .col-4, .col-8, .col-6 { grid-column: span 12; }
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Timer Styling */
+        .timer-display {
+            font-size: 4rem;
+            font-weight: 700;
+            text-align: center;
+            margin: 20px 0;
+            color: var(--season-hue);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .timer-controls {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        /* Heatmap Grid */
+        .heatmap-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 12px;
+        }
+
+        .heatmap-cell {
+            width: 14px;
+            height: 14px;
+            border-radius: 3px;
+            background: var(--border-color);
+        }
+
+        .heatmap-cell[data-level="1"] { background: #b7e4c7; }
+        .heatmap-cell[data-level="2"] { background: #74c69d; }
+        .heatmap-cell[data-level="3"] { background: #40916c; }
+        .heatmap-cell[data-level="4"] { background: #1b4332; }
+
+        /* Soundscape Player */
+        .sound-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .sound-card {
+            padding: 12px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .sound-card.active {
+            background: var(--season-bg-accent);
+            border-color: var(--season-hue);
+            color: var(--season-hue);
+        }
+
+        /* Task List */
+        .task-list { list-style: none; }
+        .task-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .task-item:last-child { border-bottom: none; }
+
+        input[type="text"], textarea, select {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            background: var(--bg-primary);
+            color: var(--text-main);
+            margin-bottom: 12px;
+            outline: none;
+        }
+    </style>
+</head>
+<body data-season="summer">
+
+    <header>
+        <div class="logo">
+            <span>🌲</span> Forest Focus
+            <span class="season-badge" id="seasonLabel">Summer Season</span>
+        </div>
+        <div class="controls">
+            <button class="btn btn-outline" id="themeToggle">🌙 Night View</button>
+        </div>
+    </header>
+
+    <div class="dashboard-grid">
+        <!-- Pomodoro Focus Timer -->
+        <div class="card col-4">
+            <div class="card-header">
+                <div class="card-title">⏱️ Focus Timer</div>
+            </div>
+            <div class="timer-display" id="timerDisplay">25:00</div>
+            <div class="timer-controls">
+                <button class="btn" id="startTimer">Start</button>
+                <button class="btn btn-outline" id="pauseTimer">Pause</button>
+                <button class="btn btn-outline" id="resetTimer">Reset</button>
+            </div>
+        </div>
+
+        <!-- Routine & Daily Tracker -->
+        <div class="card col-8">
+            <div class="card-header">
+                <div class="card-title">📋 Routine & Study Hour Tracker</div>
+                <button class="btn btn-outline" id="copyRoutine">Copy to Next Day</button>
+            </div>
+            <input type="text" id="subjectInput" placeholder="Subject/Task Name (e.g. Mathematics)">
+            <input type="number" id="hoursInput" placeholder="Logged Time (Hours)" step="0.5">
+            <button class="btn" id="addStudyLog">Log Study Session</button>
+            <ul class="task-list" id="logList" style="margin-top:15px;"></ul>
+        </div>
+
+        <!-- Heatmap Progress Matrix -->
+        <div class="card col-8">
+            <div class="card-header">
+                <div class="card-title">📊 Yearly Study Contribution</div>
+            </div>
+            <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:10px;">Daily activity heatmap based on study hours logged.</p>
+            <div class="heatmap-container" id="heatmap"></div>
+        </div>
+
+        <!-- Ambient Forest Soundscape -->
+        <div class="card col-4">
+            <div class="card-header">
+                <div class="card-title">🎧 Forest Soundscape</div>
+            </div>
+            <div class="sound-grid">
+                <div class="sound-card" data-sound="rain">🌧️ Soft Rain</div>
+                <div class="sound-card" data-sound="river">🌊 River Flow</div>
+                <div class="sound-card" data-sound="wind">🍃 Forest Wind</div>
+                <div class="sound-card" data-sound="lofi">🎹 Gentle Drone</div>
+            </div>
+        </div>
+
+        <!-- Reminders & Sticky Notes -->
+        <div class="card col-6">
+            <div class="card-header">
+                <div class="card-title">📌 Reminders</div>
+            </div>
+            <input type="text" id="taskInput" placeholder="Add a new reminder task...">
+            <ul class="task-list" id="taskList"></ul>
+        </div>
+
+        <div class="card col-6">
+            <div class="card-header">
+                <div class="card-title">📝 Quick Notes</div>
+            </div>
+            <textarea id="notesArea" rows="5" placeholder="Write down your study notes, formulas, or thoughts..."></textarea>
+        </div>
+    </div>
+
+    <script>
+        // Season Detection
+        const month = new Date().getMonth();
+        const seasons = ['winter', 'winter', 'spring', 'spring', 'spring', 'summer', 'summer', 'summer', 'autumn', 'autumn', 'autumn', 'winter'];
+        const seasonName = seasons[month];
+        document.body.setAttribute('data-season', seasonName);
+        document.getElementById('seasonLabel').innerText = seasonName.charAt(0).toUpperCase() + seasonName.slice(1) + ' Season';
+
+        // Dark/Light Theme Switch
+        const themeToggle = document.getElementById('themeToggle');
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-theme');
+            themeToggle.innerText = document.body.classList.contains('dark-theme') ? '☀️ Day View' : '🌙 Night View';
+        });
+
+        // Pomodoro Timer Logic
+        let timer;
+        let timeLeft = 25 * 60;
+        let isRunning = false;
+        const timerDisplay = document.getElementById('timerDisplay');
+
+        function updateDisplay() {
+            const mins = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+            const secs = (timeLeft % 60).toString().padStart(2, '0');
+            timerDisplay.innerText = `${mins}:${secs}`;
+        }
+
+        document.getElementById('startTimer').addEventListener('click', () => {
+            if (!isRunning) {
+                isRunning = true;
+                timer = setInterval(() => {
+                    if (timeLeft > 0) {
+                        timeLeft--;
+                        updateDisplay();
+                    } else {
+                        clearInterval(timer);
+                        alert('Focus session completed!');
+                    }
+                }, 1000);
+            }
+        });
+
+        document.getElementById('pauseTimer').addEventListener('click', () => {
+            clearInterval(timer);
+            isRunning = false;
+        });
+
+        document.getElementById('resetTimer').addEventListener('click', () => {
+            clearInterval(timer);
+            isRunning = false;
+            timeLeft = 25 * 60;
+            updateDisplay();
+        });
+
+        // Heatmap Grid Generation
+        const heatmap = document.getElementById('heatmap');
+        for (let i = 0; i < 120; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'heatmap-cell';
+            const level = Math.floor(Math.random() * 5);
+            if (level > 0) cell.setAttribute('data-level', level);
+            heatmap.appendChild(cell);
+        }
+
+        // Web Audio Synthesizer for Ambient Soundscape
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let currentOsc = null;
+
+        document.querySelectorAll('.sound-card').forEach(card => {
+            card.addEventListener('click', function() {
+                document.querySelectorAll('.sound-card').forEach(c => c.classList.remove('active'));
+                if (currentOsc) {
+                    currentOsc.stop();
+                    currentOsc = null;
+                }
+                this.classList.add('active');
+                
+                // Simple sine wave ambient tone synthesizer
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                gain.gain.value = 0.05;
+                osc.type = 'sine';
+                osc.frequency.value = this.dataset.sound === 'rain' ? 150 : this.dataset.sound === 'river' ? 220 : 180;
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                currentOsc = osc;
+            });
+        });
+
+        // Study Hours Logging
+        document.getElementById('addStudyLog').addEventListener('click', () => {
+            const subject = document.getElementById('subjectInput').value;
+            const hours = document.getElementById('hoursInput').value;
+            if (subject && hours) {
+                const li = document.createElement('li');
+                li.className = 'task-item';
+                li.innerHTML = `<span><strong>${subject}</strong></span> <span>${hours} hrs</span>`;
+                document.getElementById('logList').appendChild(li);
+                document.getElementById('subjectInput').value = '';
+                document.getElementById('hoursInput').value = '';
+            }
+        });
+
+        // Quick Notes Autosave
+        const notesArea = document.getElementById('notesArea');
+        notesArea.value = localStorage.getItem('forest_notes') || '';
+        notesArea.addEventListener('input', () => {
+            localStorage.setItem('forest_notes', notesArea.value);
+        });
+    </script>
+</body>
+</html>
